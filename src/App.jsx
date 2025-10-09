@@ -656,28 +656,28 @@ const JournalEntry = ({ entry, searchQuery, darkMode }) => {
     };
     
     return (
-        <div className={`animate-fade-in p-2 sm:p-4 md:p-5 rounded-xl backdrop-blur-sm transition-all duration-500 hover:shadow-lg ${
+        <div className={`animate-fade-in p-1.5 sm:p-3 md:p-5 rounded-xl backdrop-blur-sm transition-all duration-500 hover:shadow-lg ${
             darkMode 
                 ? 'bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700' 
                 : 'bg-white/70 border border-stone-200/50 hover:bg-white/90 hover:border-stone-300/60 shadow-sm'
         }`}>
-            <div className="flex items-center justify-between mb-1.5 sm:mb-2.5">
-                <p className={`text-xs font-medium ${darkMode ? 'text-zinc-400' : 'text-stone-500'}`}>{time || 'Just now'}</p>
+            <div className="flex items-center justify-between mb-1 sm:mb-1.5 md:mb-2.5">
+                <p className={`text-[10px] sm:text-xs md:text-sm font-medium ${darkMode ? 'text-zinc-400' : 'text-stone-500'}`}>{time || 'Just now'}</p>
                 
                 {/* Emotion Indicator */}
                 {entry.emotion && (
                     <div 
-                        className={`flex items-center gap-1 sm:gap-2 px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold backdrop-blur-sm transition-all duration-300 hover:scale-105 ${
+                        className={`flex items-center gap-1 sm:gap-1.5 md:gap-2 px-1 sm:px-2 md:px-3 py-0.5 sm:py-0.5 md:py-1 rounded-full text-[10px] sm:text-xs md:text-sm font-semibold backdrop-blur-sm transition-all duration-300 hover:scale-105 ${
                             darkMode ? 'bg-zinc-800 border border-zinc-700' : 'bg-white/80 border border-stone-200'
                         }`}
                         style={{ borderColor: entry.emotion.color + '40' }}
                     >
-                        <span className="text-xs sm:text-base">{entry.emotion.emoji}</span>
-                        <span className="text-xs" style={{ color: entry.emotion.color }}>{entry.emotion.label}</span>
+                        <span className="text-xs sm:text-sm md:text-base">{entry.emotion.emoji}</span>
+                        <span className="text-[10px] sm:text-xs md:text-sm" style={{ color: entry.emotion.color }}>{entry.emotion.label}</span>
                     </div>
                 )}
             </div>
-            <p className={`text-xs sm:text-base leading-relaxed whitespace-pre-wrap break-words ${darkMode ? 'text-zinc-200' : 'text-stone-700'}`}>
+            <p className={`text-[10px] sm:text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words ${darkMode ? 'text-zinc-200' : 'text-stone-700'}`}>
                 {highlightText(entry.text, searchQuery)}
             </p>
         </div>
@@ -902,25 +902,25 @@ function JournalScreen({ userId, darkMode }) {
 
     return (
         <div className="flex flex-col h-full">
-            <header className={`p-2 sm:p-4 border-b transition-all duration-500 backdrop-blur-md ${darkMode ? 'border-zinc-800 bg-zinc-900' : 'border-stone-200/50 bg-stone-50/80'}`}>
+            <header className={`p-2 sm:p-3 md:p-4 border-b transition-all duration-500 backdrop-blur-md ${darkMode ? 'border-zinc-800 bg-zinc-900' : 'border-stone-200/50 bg-stone-50/80'}`}>
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 sm:gap-4">
-                        <h1 className={`text-base sm:text-xl font-semibold tracking-tight transition-colors duration-500 ${darkMode ? 'text-white' : 'text-stone-800'}`}>My Journal</h1>
+                    <div className="flex items-center gap-1.5 sm:gap-3 md:gap-4">
+                        <h1 className={`text-sm sm:text-lg md:text-xl font-semibold tracking-tight transition-colors duration-500 ${darkMode ? 'text-white' : 'text-stone-800'}`}>My Journal</h1>
                         {streak.current > 0 && (
-                            <div className={`flex items-center space-x-1 sm:space-x-2 px-1.5 sm:px-3 py-0.5 sm:py-1.5 rounded-lg backdrop-blur-sm transition-all duration-500 ${darkMode ? 'bg-amber-900/25 border border-amber-800/30' : 'bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/50'}`}>
-                                <FireIcon className={`h-3 sm:h-4 w-3 sm:w-4 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`} />
-                                <span className={`font-bold text-xs ${darkMode ? 'text-amber-400' : 'text-amber-700'}`}>{streak.current}</span>
-                                <span className={`text-xs ${darkMode ? 'text-amber-300' : 'text-amber-600'}`}>days</span>
+                            <div className={`flex items-center space-x-1 sm:space-x-2 px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 md:py-1.5 rounded-md sm:rounded-lg backdrop-blur-sm transition-all duration-500 ${darkMode ? 'bg-amber-900/25 border border-amber-800/30' : 'bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/50'}`}>
+                                <FireIcon className={`h-2.5 sm:h-3 md:h-4 w-2.5 sm:w-3 md:w-4 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`} />
+                                <span className={`font-bold text-[10px] sm:text-xs md:text-sm ${darkMode ? 'text-amber-400' : 'text-amber-700'}`}>{streak.current}</span>
+                                <span className={`text-[10px] sm:text-xs ${darkMode ? 'text-amber-300' : 'text-amber-600'}`}>days</span>
                             </div>
                         )}
                     </div>
-                    <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2">
                         <button
                             onClick={() => setSearchQuery(searchQuery ? '' : ' ')}
-                            className={`p-1.5 sm:p-2 rounded-lg transition-all duration-300 hover:scale-105 ${darkMode ? 'bg-zinc-800 hover:bg-slate-600/70 text-stone-500' : 'bg-stone-100 hover:bg-stone-200 text-stone-700'}`}
+                            className={`p-1 sm:p-1.5 md:p-2 rounded-md sm:rounded-lg transition-all duration-300 hover:scale-105 ${darkMode ? 'bg-zinc-800 hover:bg-slate-600/70 text-stone-500' : 'bg-stone-100 hover:bg-stone-200 text-stone-700'}`}
                             title="Search entries"
                         >
-                            <svg className="h-4 sm:h-5 w-4 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="h-3.5 sm:h-4 md:h-5 w-3.5 sm:w-4 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </button>
@@ -929,25 +929,25 @@ function JournalScreen({ userId, darkMode }) {
                 
                 {/* Collapsible Search Bar */}
                 {searchQuery !== '' && (
-                    <div className="mt-2 sm:mt-3 relative group animate-fade-in">
+                    <div className="mt-1.5 sm:mt-2 md:mt-3 relative group animate-fade-in">
                         <input
                             type="text"
                             value={searchQuery === ' ' ? '' : searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search your thoughts..."
                             autoFocus
-                            className={`w-full pl-4 pr-10 py-2 rounded-lg text-sm backdrop-blur-sm transition-all duration-500 focus:outline-none focus:ring-2 ${darkMode ? 'bg-zinc-800 text-white placeholder-zinc-500 border border-zinc-700 focus:ring-gray-600 focus:border-gray-600' : 'bg-white/60 text-stone-700 placeholder-stone-400 border border-stone-200/50 focus:ring-zinc-600 focus:border-zinc-600'}`}
+                            className={`w-full pl-2 sm:pl-3 md:pl-4 pr-7 sm:pr-9 md:pr-10 py-1 sm:py-1.5 md:py-2 rounded-lg text-xs sm:text-sm md:text-base backdrop-blur-sm transition-all duration-500 focus:outline-none focus:ring-2 ${darkMode ? 'bg-zinc-800 text-white placeholder-zinc-500 border border-zinc-700 focus:ring-gray-600 focus:border-gray-600' : 'bg-white/60 text-stone-700 placeholder-stone-400 border border-stone-200/50 focus:ring-zinc-600 focus:border-zinc-600'}`}
                         />
                         <button
                             onClick={() => setSearchQuery('')}
-                            className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full transition-all duration-300 hover:scale-110 ${darkMode ? 'hover:bg-gray-700/50 text-zinc-400' : 'hover:bg-stone-100 text-stone-400'}`}
+                            className={`absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 p-0.5 sm:p-1 rounded-full transition-all duration-300 hover:scale-110 ${darkMode ? 'hover:bg-gray-700/50 text-zinc-400' : 'hover:bg-stone-100 text-stone-400'}`}
                         >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="h-3 sm:h-3.5 md:h-4 w-3 sm:w-3.5 md:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
                         {searchQuery.trim() && (
-                            <div className={`mt-2 text-xs ${darkMode ? 'text-zinc-400' : 'text-stone-600'}`}>
+                            <div className={`mt-1 sm:mt-1.5 md:mt-2 text-[10px] sm:text-xs md:text-sm ${darkMode ? 'text-zinc-400' : 'text-stone-600'}`}>
                                 {filteredEntries.length === 0 ? (
                                     <span>No entries found</span>
                                 ) : (
@@ -958,34 +958,34 @@ function JournalScreen({ userId, darkMode }) {
                     </div>
                 )}
             </header>
-            <div className={`flex-1 p-2 sm:p-4 md:p-6 space-y-4 sm:space-y-8 md:space-y-10 overflow-y-auto ${darkMode ? 'bg-black' : 'bg-stone-50/50'}`}>
+            <div className={`flex-1 p-1.5 sm:p-3 md:p-6 space-y-2 sm:space-y-4 md:space-y-10 overflow-y-auto ${darkMode ? 'bg-black' : 'bg-stone-50/50'}`}>
                 {Object.keys(groupedEntries).length === 0 ? (
-                    <div className={`text-center pt-10 sm:pt-16 md:pt-20 px-4 ${darkMode ? 'text-zinc-400' : 'text-stone-500'}`}>
+                    <div className={`text-center pt-6 sm:pt-12 md:pt-20 px-2 sm:px-4 ${darkMode ? 'text-zinc-400' : 'text-stone-500'}`}>
                         {searchQuery ? (
                             <div className="max-w-md mx-auto">
-                                <span className="text-3xl sm:text-5xl md:text-6xl mb-2 sm:mb-4 block">🔍</span>
-                                <p className="text-sm sm:text-lg mb-1 sm:mb-2">No entries found</p>
-                                <p className="text-xs sm:text-sm mb-3 sm:mb-6">Try adjusting your search terms</p>
+                                <span className="text-2xl sm:text-4xl md:text-6xl mb-1 sm:mb-3 md:mb-4 block">🔍</span>
+                                <p className="text-xs sm:text-base md:text-lg mb-0.5 sm:mb-1 md:mb-2">No entries found</p>
+                                <p className="text-[10px] sm:text-sm md:text-base mb-2 sm:mb-4 md:mb-6">Try adjusting your search terms</p>
                                 <button 
                                     onClick={() => setSearchQuery('')}
-                                    className={`px-3 sm:px-6 py-1.5 sm:py-3 text-xs sm:text-base rounded-xl font-medium transition-all duration-300 hover:scale-105 ${darkMode ? 'bg-teal-600 hover:bg-teal-700 text-white border border-gray-700' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'}`}
+                                    className={`px-2 sm:px-4 md:px-6 py-1 sm:py-2 md:py-3 text-[10px] sm:text-sm md:text-base rounded-xl font-medium transition-all duration-300 hover:scale-105 ${darkMode ? 'bg-teal-600 hover:bg-teal-700 text-white border border-gray-700' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'}`}
                                 >
                                     Clear Search
                                 </button>
                             </div>
                         ) : (
                             <div className="max-w-md mx-auto">
-                                <span className="text-3xl sm:text-5xl md:text-6xl mb-2 sm:mb-4 block">📖</span>
-                                <p className="text-base sm:text-xl mb-1 sm:mb-2 font-medium">Your journal awaits</p>
-                                <p className="text-xs sm:text-base">Start writing to capture your thoughts and memories</p>
+                                <span className="text-2xl sm:text-4xl md:text-6xl mb-1 sm:mb-3 md:mb-4 block">📖</span>
+                                <p className="text-sm sm:text-lg md:text-xl mb-0.5 sm:mb-1 md:mb-2 font-medium">Your journal awaits</p>
+                                <p className="text-[10px] sm:text-sm md:text-base">Start writing to capture your thoughts and memories</p>
                             </div>
                         )}
                     </div>
                 ) : (
                     Object.entries(groupedEntries).map(([date, entriesOnDate]) => (
                         <div key={date} className="relative">
-                            <h2 className={`text-xs sm:text-base font-semibold px-2 sm:px-4 py-1 sm:py-1.5 rounded-lg inline-block mb-2 sm:mb-4 backdrop-blur-sm transition-colors duration-500 ${darkMode ? 'text-stone-500 bg-zinc-900 border border-zinc-800' : 'text-stone-600 bg-white/60 border border-stone-200/50 shadow-sm'}`}>{date}</h2>
-                            <div className={`space-y-2 sm:space-y-5 border-l-2 pl-3 sm:pl-6 md:pl-8 py-2 transition-colors duration-500 ${darkMode ? 'border-zinc-800' : 'border-stone-200/50'}`}>
+                            <h2 className={`text-[10px] sm:text-sm md:text-base font-semibold px-1.5 sm:px-3 md:px-4 py-0.5 sm:py-1 md:py-1.5 rounded-lg inline-block mb-1 sm:mb-2 md:mb-4 backdrop-blur-sm transition-colors duration-500 ${darkMode ? 'text-stone-500 bg-zinc-900 border border-zinc-800' : 'text-stone-600 bg-white/60 border border-stone-200/50 shadow-sm'}`}>{date}</h2>
+                            <div className={`space-y-1.5 sm:space-y-3 md:space-y-5 border-l-2 pl-2 sm:pl-4 md:pl-8 py-1 sm:py-1.5 md:py-2 transition-colors duration-500 ${darkMode ? 'border-zinc-800' : 'border-stone-200/50'}`}>
                                 {entriesOnDate.map(entry => <JournalEntry key={entry.id} entry={entry} searchQuery={searchQuery} darkMode={darkMode} />)}
                             </div>
                         </div>
@@ -993,34 +993,34 @@ function JournalScreen({ userId, darkMode }) {
                 )}
                 <div ref={bottomOfList} />
             </div>
-            <div className={`p-4 border-t backdrop-blur-md transition-all duration-500 ${darkMode ? 'border-zinc-800 bg-zinc-900' : 'border-stone-200/50 bg-white/80'}`}>
+            <div className={`p-2 sm:p-3 md:p-4 border-t backdrop-blur-md transition-all duration-500 ${darkMode ? 'border-zinc-800 bg-zinc-900' : 'border-stone-200/50 bg-white/80'}`}>
                 {recordingError && (
-                    <div className={`mb-3 p-3 rounded-xl text-sm font-medium backdrop-blur-sm ${darkMode ? 'bg-red-900/20 text-red-300 border border-red-800/30' : 'bg-red-50 text-red-700 border border-red-200/50'}`}>
+                    <div className={`mb-1.5 sm:mb-2 md:mb-3 p-1.5 sm:p-2 md:p-3 rounded-xl text-[10px] sm:text-xs md:text-sm font-medium backdrop-blur-sm ${darkMode ? 'bg-red-900/20 text-red-300 border border-red-800/30' : 'bg-red-50 text-red-700 border border-red-200/50'}`}>
                         {recordingError}
                     </div>
                 )}
                 {isRecording && (
-                    <div className={`mb-2 p-2 rounded-xl text-xs font-medium flex items-center backdrop-blur-sm ${darkMode ? 'bg-zinc-800 text-white border border-zinc-700' : 'bg-emerald-50 text-emerald-700 border border-emerald-200/50'}`}>
+                    <div className={`mb-1 sm:mb-1.5 md:mb-2 p-1 sm:p-1.5 md:p-2 rounded-xl text-[10px] sm:text-xs font-medium flex items-center backdrop-blur-sm ${darkMode ? 'bg-zinc-800 text-white border border-zinc-700' : 'bg-emerald-50 text-emerald-700 border border-emerald-200/50'}`}>
                         <div className="flex items-center space-x-2">
-                            <div className="w-1.5 h-1.5 sm:w-2.5 sm:h-2.5 bg-red-500 rounded-full animate-pulse"></div>
+                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-2.5 md:h-2.5 bg-red-500 rounded-full animate-pulse"></div>
                             <span>Recording...</span>
                         </div>
                     </div>
                 )}
-                <form onSubmit={handleSaveEntry} className="flex items-end gap-1 sm:gap-2">
+                <form onSubmit={handleSaveEntry} className="flex items-end gap-1 sm:gap-1.5 md:gap-2">
                     <textarea 
                         value={newEntry} 
                         onChange={(e) => setNewEntry(e.target.value)} 
                         placeholder="What's on your mind today?" 
                         rows="2"
-                        className={`flex-1 p-2 sm:p-3 rounded-lg text-xs sm:text-sm leading-relaxed resize-none backdrop-blur-sm transition-all duration-500 focus:outline-none focus:ring-2 ${darkMode ? 'bg-zinc-800 text-white placeholder-zinc-500 border border-zinc-700 focus:ring-gray-600 focus:border-gray-600 focus:bg-gray-800/90' : 'bg-white/60 text-stone-700 placeholder-stone-400 border border-stone-200/50 focus:ring-zinc-600 focus:border-zinc-600 focus:bg-white/80 shadow-sm'}`}
+                        className={`flex-1 p-1.5 sm:p-2 md:p-3 rounded-lg text-[10px] sm:text-xs md:text-sm leading-relaxed resize-none backdrop-blur-sm transition-all duration-500 focus:outline-none focus:ring-2 ${darkMode ? 'bg-zinc-800 text-white placeholder-zinc-500 border border-zinc-700 focus:ring-gray-600 focus:border-gray-600 focus:bg-gray-800/90' : 'bg-white/60 text-stone-700 placeholder-stone-400 border border-stone-200/50 focus:ring-zinc-600 focus:border-zinc-600 focus:bg-white/80 shadow-sm'}`}
                         disabled={isSaving}
                     />
                     <button
                         type="button"
                         onClick={isRecording ? stopRecording : startRecording}
                         disabled={isSaving}
-                        className={`p-1.5 sm:p-3 rounded-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
+                        className={`p-1 sm:p-2 md:p-3 rounded-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
                             isRecording 
                                 ? 'bg-red-500 hover:bg-red-600 text-white' 
                                 : darkMode 
@@ -1031,37 +1031,21 @@ function JournalScreen({ userId, darkMode }) {
                         
                     >
                         {isRecording ? (
-                            <StopIcon className="h-4 sm:h-5 w-4 sm:w-5" />
+                            <StopIcon className="h-3 sm:h-4 md:h-5 w-3 sm:w-4 md:w-5" />
                         ) : (
-                            <MicrophoneIcon className="h-4 sm:h-5 w-4 sm:w-5" />
+                            <MicrophoneIcon className="h-3 sm:h-4 md:h-5 w-3 sm:w-4 md:w-5" />
                         )}
                     </button>
                     <button 
                         type="submit" 
                         disabled={isSaving || newEntry.trim() === ''} 
-                        className={`p-1.5 sm:p-3 rounded-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${darkMode ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-teal-600 hover:bg-teal-700 text-white'}`}
+                        className={`p-1 sm:p-2 md:p-3 rounded-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${darkMode ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-teal-600 hover:bg-teal-700 text-white'}`}
                         title="Save Entry"
                     >
                         {isSaving ? (
                             <Spinner />
                         ) : (
-                            <svg className="h-4 sm:h-5 w-4 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                        ) : (
-                            <MicrophoneIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                        )}
-                    </button>
-                    <button 
-                        type="submit" 
-                        disabled={isSaving || newEntry.trim() === ''} 
-                        className={`p-2 sm:p-3 rounded-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${darkMode ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-teal-600 hover:bg-teal-700 text-white'}`}
-                        title="Save Entry"
-                    >
-                        {isSaving ? (
-                            <Spinner />
-                        ) : (
-                            <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="h-3 sm:h-4 md:h-5 w-3 sm:w-4 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                         )}
