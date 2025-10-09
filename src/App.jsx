@@ -1059,6 +1059,25 @@ function JournalScreen({ userId, darkMode }) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
+    // Function to format AI response - remove markdown symbols
+    const formatAIResponse = (text) => {
+        if (!text) return '';
+        
+        return text
+            // Remove ### headings but keep the text
+            .replace(/###\s+/g, '')
+            // Remove ** bold markers
+            .replace(/\*\*/g, '')
+            // Remove * italic markers (but not bullet points at start of line)
+            .replace(/\*(?!\s)/g, '')
+            .replace(/(?<!\n)\*(?=\s)/g, '')
+            // Remove __ markers
+            .replace(/__/g, '')
+            // Clean up any remaining markdown
+            .replace(/^\s*[-*+]\s+/gm, '• ') // Convert markdown bullets to proper bullets
+            .trim();
+    };
+
     const handleAnalysis = async () => {
         setIsLoading(true);
         setInsights('');
@@ -1087,7 +1106,8 @@ function JournalScreen({ userId, darkMode }) {
                 return;
             }
             const result = await analyzeJournalEntries(entriesData);
-            setInsights(result);
+            const formattedResult = formatAIResponse(result);
+            setInsights(formattedResult);
             toast.dismiss(loadingToast);
             toast.success('Insights generated! ✨', {
                 duration: 3000,
@@ -1108,19 +1128,29 @@ function JournalScreen({ userId, darkMode }) {
     };
 
     return (
-        <div className="flex flex-col h-full items-center justify-center text-center p-4 sm:p-8">
-            <div className="w-full max-w-2xl">
-                <BotIcon />
-                <h2 className={`text-3xl font-bold mt-4 mb-2 ${darkMode ? 'text-white' : 'text-slate-800'}`}>Your Personal Insights</h2>
-                {!insights && !isLoading && <p className={`max-w-md mx-auto ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Click the button below to have your AI partner analyze your journal and reveal hidden patterns.</p>}
-                <button onClick={handleAnalysis} disabled={isLoading} className="mt-8 px-8 py-3 bg-purple-600 text-white hover:bg-purple-700 font-bold rounded-lg shadow-lg transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-50 flex items-center mx-auto">
-                    {isLoading ? <><Spinner /> <span className="ml-3">Analyzing...</span></> : 'Analyze My Journal'}
-                </button>
-                <div className="mt-8 text-left">
-                    {error && <p className={`p-4 rounded-lg ${darkMode ? 'text-red-400 bg-red-900/30 border border-red-800' : 'text-red-500 bg-red-100'}`}>{error}</p>}
+        <div className="flex flex-col h-full items-center justify-start overflow-y-auto p-4 sm:p-8">
+            <div className="w-full max-w-4xl mx-auto">
+                <div className="text-center mb-6">
+                    <BotIcon />
+                    <h2 className={`text-2xl sm:text-3xl font-bold mt-4 mb-2 ${darkMode ? 'text-white' : 'text-slate-800'}`}>Your Personal Insights</h2>
+                    {!insights && !isLoading && <p className={`text-sm sm:text-base max-w-md mx-auto ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Click the button below to have your AI partner analyze your journal and reveal hidden patterns.</p>}
+                </div>
+                <div className="text-center">
+                    <button onClick={handleAnalysis} disabled={isLoading} className="mt-4 sm:mt-8 px-6 sm:px-8 py-2.5 sm:py-3 bg-purple-600 text-white hover:bg-purple-700 font-bold rounded-lg shadow-lg transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center text-sm sm:text-base">
+                        {isLoading ? <><Spinner /> <span className="ml-3">Analyzing...</span></> : 'Analyze My Journal'}
+                    </button>
+                </div>
+                <div className="mt-6 sm:mt-8">
+                    {error && <p className={`p-4 rounded-lg text-sm sm:text-base ${darkMode ? 'text-red-400 bg-red-900/30 border border-red-800' : 'text-red-500 bg-red-100'}`}>{error}</p>}
                     {insights && (
-                        <div className={`p-6 rounded-lg shadow-sm whitespace-pre-wrap animate-fade-in ${darkMode ? 'bg-zinc-900 border border-zinc-800 text-zinc-200' : 'bg-white text-slate-700'}`}>
-                            <p className="leading-relaxed">{insights}</p>
+                        <div className={`p-4 sm:p-6 rounded-lg shadow-sm animate-fade-in max-w-full overflow-hidden ${darkMode ? 'bg-zinc-900 border border-zinc-800 text-zinc-200' : 'bg-white text-slate-700'}`}>
+                            <div className="max-w-none">
+                                {insights.split('\n\n').map((paragraph, idx) => (
+                                    <p key={idx} className="mb-4 text-sm sm:text-base leading-relaxed break-words whitespace-pre-wrap">
+                                        {paragraph}
+                                    </p>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -3070,6 +3100,20 @@ function ChatScreen({ userId, darkMode }) {
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef(null);
 
+    // Function to format AI response - remove markdown symbols
+    const formatAIResponse = (text) => {
+        if (!text) return '';
+        
+        return text
+            .replace(/###\s+/g, '')
+            .replace(/\*\*/g, '')
+            .replace(/\*(?!\s)/g, '')
+            .replace(/(?<!\n)\*(?=\s)/g, '')
+            .replace(/__/g, '')
+            .replace(/^\s*[-*+]\s+/gm, '• ')
+            .trim();
+    };
+
     // Load chat sessions on mount
     useEffect(() => {
         const sessionsPath = `users/${userId}/chatSessions`;
@@ -3187,7 +3231,8 @@ function ChatScreen({ userId, darkMode }) {
             const entriesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
             const aiResponse = await askPastSelf(input, entriesData);
-            const finalMessages = [...updatedMessages, { sender: 'ai', text: aiResponse }];
+            const formattedResponse = formatAIResponse(aiResponse);
+            const finalMessages = [...updatedMessages, { sender: 'ai', text: formattedResponse }];
             setMessages(finalMessages);
             
             // Save to Firestore
@@ -3267,19 +3312,19 @@ function ChatScreen({ userId, darkMode }) {
                 <header className={`p-6 border-b ${darkMode ? 'border-zinc-800 bg-zinc-900' : 'border-slate-200 bg-white'}`}>
                     <h1 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>Talk to Your Past Self</h1>
                 </header>
-                <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+                <div className="flex-1 p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto">
                     {messages.map((msg, index) => (
-                        <div key={index} className={`flex items-end gap-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            {msg.sender === 'ai' && <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${darkMode ? 'bg-zinc-800' : 'bg-teal-100'}`}><BotIcon className={`h-5 w-5 ${darkMode ? 'text-zinc-400' : 'text-stone-700'}`}/></div>}
-                            <div className={`max-w-lg px-4 py-3 rounded-2xl ${msg.sender === 'user' ? darkMode ? 'bg-zinc-800 text-white' : 'bg-stone-200 text-slate-800' : darkMode ? 'bg-zinc-900 text-zinc-200 border border-zinc-800' : 'bg-white text-slate-700 shadow-sm'}`}>
-                                <p className="leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                        <div key={index} className={`flex items-end gap-2 sm:gap-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                            {msg.sender === 'ai' && <div className={`flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${darkMode ? 'bg-zinc-800' : 'bg-teal-100'}`}><BotIcon className={`h-4 w-4 sm:h-5 sm:w-5 ${darkMode ? 'text-zinc-400' : 'text-stone-700'}`}/></div>}
+                            <div className={`max-w-[85%] sm:max-w-lg px-3 sm:px-4 py-2 sm:py-3 rounded-2xl break-words ${msg.sender === 'user' ? darkMode ? 'bg-zinc-800 text-white' : 'bg-stone-200 text-slate-800' : darkMode ? 'bg-zinc-900 text-zinc-200 border border-zinc-800' : 'bg-white text-slate-700 shadow-sm'}`}>
+                                <p className="text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words">{msg.text}</p>
                             </div>
                         </div>
                     ))}
                     {isLoading && (
-                        <div className="flex items-end gap-3 justify-start">
-                            <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${darkMode ? 'bg-zinc-800' : 'bg-teal-100'}`}><BotIcon className={`h-5 w-5 ${darkMode ? 'text-zinc-400' : 'text-stone-700'}`}/></div>
-                            <div className={`max-w-lg px-4 py-3 rounded-2xl flex items-center space-x-2 ${darkMode ? 'bg-zinc-900 text-zinc-200 border border-zinc-800' : 'bg-white text-slate-700 shadow-sm'}`}>
+                        <div className="flex items-end gap-2 sm:gap-3 justify-start">
+                            <div className={`flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${darkMode ? 'bg-zinc-800' : 'bg-teal-100'}`}><BotIcon className={`h-4 w-4 sm:h-5 sm:w-5 ${darkMode ? 'text-zinc-400' : 'text-stone-700'}`}/></div>
+                            <div className={`max-w-[85%] sm:max-w-lg px-3 sm:px-4 py-2 sm:py-3 rounded-2xl flex items-center space-x-2 ${darkMode ? 'bg-zinc-900 text-zinc-200 border border-zinc-800' : 'bg-white text-slate-700 shadow-sm'}`}>
                                 <div className={`w-2 h-2 rounded-full animate-bounce ${darkMode ? 'bg-zinc-600' : 'bg-slate-400'}`}></div>
                                 <div className={`w-2 h-2 rounded-full animate-bounce ${darkMode ? 'bg-zinc-600' : 'bg-slate-400'}`} style={{animationDelay: '0.2s'}}></div>
                                 <div className={`w-2 h-2 rounded-full animate-bounce ${darkMode ? 'bg-zinc-600' : 'bg-slate-400'}`} style={{animationDelay: '0.4s'}}></div>
