@@ -619,7 +619,7 @@ function AuthScreen({ darkMode }) {
         <div className={`min-h-screen flex flex-col justify-center items-center p-4 transition-colors duration-300 ${darkMode ? 'bg-black' : 'bg-slate-50'}`}>
             <div className="w-full max-w-sm">
                 <div className="text-center mb-8">
-                    <h1 className={`text-4xl font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>Life Partner AI</h1>
+                    <h1 className={`text-4xl font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>SORA-AI Life Partner</h1>
                     <p className={`mt-2 ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Your personal journal for self-discovery.</p>
                 </div>
                 <div className={`p-8 rounded-2xl shadow-lg transition-colors duration-300 ${darkMode ? 'bg-zinc-900 border border-slate-700' : 'bg-white'}`}>
