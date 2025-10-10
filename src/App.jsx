@@ -48,6 +48,7 @@ const XCircleIcon = ({className}) => ( <svg xmlns="http://www.w3.org/2000/svg" c
 const PlusIcon = ({className}) => ( <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-6 w-6"} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg> );
 const PencilSquareIcon = ({className}) => ( <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-6 w-6"} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg> );
 const TrashIcon = ({className}) => ( <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-6 w-6"} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg> );
+const InfoIcon = ({className}) => ( <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-6 w-6"} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> );
 const UserGroupIcon = ({className}) => ( <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-6 w-6"} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg> );
 const HeartIcon = ({className}) => ( <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-6 w-6"} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg> );
 const UserIcon = ({className}) => ( <svg xmlns="http://www.w3.org/2000/svg" className={className || "h-6 w-6"} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> );
@@ -3361,6 +3362,8 @@ function ChatScreen({ userId, darkMode }) {
 // --- 5. Main App Layout ---
 function MainApp({ user, darkMode, toggleDarkMode }) {
     const [activeTab, setActiveTab] = useState('journal');
+    const [showAboutModal, setShowAboutModal] = useState(false);
+    
     const handleSignOut = async () => { 
         await signOut(auth);
         toast.success('Signed out successfully. See you soon! 👋', {
@@ -3395,6 +3398,11 @@ function MainApp({ user, darkMode, toggleDarkMode }) {
                         {darkMode ? <SunIcon className="h-6 w-6 flex-shrink-0" /> : <MoonIcon className="h-6 w-6 flex-shrink-0" />}
                         <span className="hidden md:block font-semibold">{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
                     </button>
+                    {/* About Button */}
+                    <button onClick={() => setShowAboutModal(true)} title="About Sora" className={`w-full flex items-center space-x-4 p-3 rounded-xl transition-all duration-200 ${darkMode ? 'text-zinc-400 hover:bg-teal-900/30 hover:text-teal-400 hover:border hover:border-teal-800/50' : 'text-zinc-400 hover:bg-teal-50 hover:text-teal-600 hover:border hover:border-teal-100'}`}>
+                        <InfoIcon className="h-6 w-6 flex-shrink-0" />
+                        <span className="hidden md:block font-semibold">About</span>
+                    </button>
                     <button onClick={handleSignOut} title="Sign Out" className={`w-full flex items-center space-x-4 p-3 rounded-xl transition-all duration-200 ${darkMode ? 'text-zinc-400 hover:bg-rose-900/30 hover:text-rose-400 hover:border hover:border-rose-800/50' : 'text-zinc-400 hover:bg-rose-50 hover:text-rose-500 hover:border hover:border-rose-100'}`}>
                         <SignOutIcon className="h-6 w-6 flex-shrink-0" />
                         <span className="hidden md:block font-semibold">Sign Out</span>
@@ -3410,6 +3418,84 @@ function MainApp({ user, darkMode, toggleDarkMode }) {
                 {activeTab === 'chat' && <ChatScreen userId={user.uid} darkMode={darkMode} />}
                 {activeTab === 'insights' && <InsightsScreen userId={user.uid} darkMode={darkMode} />}
             </main>
+            
+            {/* About Modal */}
+            {showAboutModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={() => setShowAboutModal(false)}>
+                    <div className={`max-w-3xl w-full max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-6 sm:p-8 ${darkMode ? 'bg-zinc-900 border border-zinc-800' : 'bg-white'}`} onClick={(e) => e.stopPropagation()}>
+                        {/* Header */}
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className={`p-2 rounded-xl ${darkMode ? 'bg-teal-900/30' : 'bg-teal-50'}`}>
+                                    <SparklesIcon className={`h-8 w-8 ${darkMode ? 'text-teal-400' : 'text-teal-600'}`} />
+                                </div>
+                                <div>
+                                    <h2 className={`text-2xl sm:text-3xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>About Sora</h2>
+                                    <p className={`text-sm ${darkMode ? 'text-zinc-400' : 'text-slate-600'}`}>Your AI Life Partner</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowAboutModal(false)} className={`p-2 rounded-lg transition-colors ${darkMode ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-slate-100 text-slate-600'}`}>
+                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Description */}
+                        <p className={`text-base sm:text-lg mb-6 leading-relaxed ${darkMode ? 'text-zinc-300' : 'text-slate-700'}`}>
+                            Sora is an intelligent journaling companion that helps you reflect, grow, and achieve your personal goals through AI-powered insights and features.
+                        </p>
+
+                        {/* Features Grid */}
+                        <div className="space-y-4 mb-6">
+                            <h3 className={`text-xl font-semibold mb-3 ${darkMode ? 'text-white' : 'text-slate-900'}`}>✨ Features</h3>
+                            
+                            <div className="grid gap-3 sm:gap-4">
+                                {[
+                                    { icon: '📝', title: 'Smart Journaling', desc: 'Write or record your thoughts with voice-to-text transcription' },
+                                    { icon: '💬', title: 'AI Chat Companion', desc: 'Talk to your past self and get insights from your journal history' },
+                                    { icon: '📊', title: 'Analytics Dashboard', desc: 'Visualize your mood patterns, emotional trends, and writing habits' },
+                                    { icon: '🎯', title: 'Goals & Habits', desc: 'Set goals, track habits, and monitor your progress over time' },
+                                    { icon: '🔮', title: 'AI Insights', desc: 'Get personalized insights and patterns from your journal entries' },
+                                    { icon: '📅', title: 'On This Day', desc: 'Revisit memories from past years on the same day' },
+                                    { icon: '🔔', title: 'Smart Notifications', desc: 'Scheduled reminders to maintain your journaling streak' },
+                                    { icon: '🌙', title: 'Dark Mode', desc: 'Easy on the eyes with beautiful dark theme support' },
+                                    { icon: '📱', title: 'PWA Ready', desc: 'Install as an app on your phone or desktop for native-like experience' },
+                                    { icon: '🔒', title: 'Secure & Private', desc: 'Your data is encrypted and stored securely with Firebase' },
+                                    { icon: '🎨', title: 'Beautiful UI', desc: 'Modern, responsive design that works on all devices' },
+                                ].map((feature, idx) => (
+                                    <div key={idx} className={`flex items-start gap-3 p-3 sm:p-4 rounded-xl transition-all hover:scale-[1.02] ${darkMode ? 'bg-zinc-800/50 hover:bg-zinc-800' : 'bg-slate-50 hover:bg-slate-100'}`}>
+                                        <span className="text-2xl flex-shrink-0">{feature.icon}</span>
+                                        <div>
+                                            <h4 className={`font-semibold text-sm sm:text-base ${darkMode ? 'text-white' : 'text-slate-900'}`}>{feature.title}</h4>
+                                            <p className={`text-xs sm:text-sm ${darkMode ? 'text-zinc-400' : 'text-slate-600'}`}>{feature.desc}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Tech Stack */}
+                        <div className={`p-4 sm:p-6 rounded-xl mb-6 ${darkMode ? 'bg-zinc-800/50' : 'bg-slate-50'}`}>
+                            <h3 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-white' : 'text-slate-900'}`}>🛠️ Built With</h3>
+                            <div className="flex flex-wrap gap-2">
+                                {['React', 'Vite', 'Tailwind CSS', 'Firebase', 'Google Gemini AI', 'PWA'].map((tech) => (
+                                    <span key={tech} className={`px-3 py-1 rounded-lg text-xs sm:text-sm font-medium ${darkMode ? 'bg-teal-900/30 text-teal-400 border border-teal-800/50' : 'bg-teal-50 text-teal-700 border border-teal-200'}`}>
+                                        {tech}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className={`text-center pt-4 border-t ${darkMode ? 'border-zinc-800' : 'border-slate-200'}`}>
+                            <p className={`text-sm ${darkMode ? 'text-zinc-400' : 'text-slate-600'}`}>
+                                Made with ❤️ for personal growth and self-reflection
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
