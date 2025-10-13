@@ -60,27 +60,110 @@ const CHATBOT_PERSONA_PROMPT = `You are an AI embodiment of a person's past self
 
 async function analyzeJournalEntries(entries) {
     try {
-        console.log('Starting journal analysis with', entries.length, 'entries');
+        console.log('🔍 Starting RAG-enhanced journal analysis with', entries.length, 'entries');
         
-        const entriesText = entries
-            .map(e => {
-                const date = e.createdAt?.toDate ? e.createdAt.toDate().toLocaleDateString() : 'Recent';
-                return `[${date}] ${e.text}`;
-            })
-            .join('\n\n');
+        // Step 1: Check if entries have embeddings
+        const entriesWithEmbeddings = entries.filter(e => e.embedding && e.embedding.length > 0);
+        console.log(`📊 Entries with embeddings: ${entriesWithEmbeddings.length}/${entries.length}`);
+        
+        // Step 2: Use RAG to cluster and analyze entries by themes
+        let analysisPrompt;
+        
+        if (entriesWithEmbeddings.length >= 5) {
+            console.log('✨ Using RAG-enhanced analysis with semantic clustering');
+            
+            // Sample key themes to find relevant entries
+            const themes = [
+                'personal growth and achievements',
+                'challenges and struggles',
+                'relationships and social interactions',
+                'emotions and mental health',
+                'goals and aspirations',
+                'daily life and routines'
+            ];
+            
+            // Find most relevant entries for each theme
+            const thematicEntries = new Map();
+            
+            for (const theme of themes) {
+                const relevant = await findRelevantEntries(theme, entriesWithEmbeddings, 5);
+                if (relevant && relevant.length > 0) {
+                    thematicEntries.set(theme, relevant);
+                }
+            }
+            
+            console.log(`📚 Collected entries for ${thematicEntries.size} themes`);
+            
+            // Build context with thematic sections
+            let contextText = '';
+            for (const [theme, themeEntries] of thematicEntries) {
+                contextText += `\n--- Theme: ${theme.toUpperCase()} ---\n`;
+                contextText += themeEntries.map(e => {
+                    const date = e.createdAt?.toDate ? e.createdAt.toDate().toLocaleDateString() : 'Recent';
+                    return `[${date}] ${e.text}`;
+                }).join('\n\n');
+                contextText += '\n';
+            }
+            
+            analysisPrompt = `You are analyzing journal entries using a thematic approach. Below are entries organized by key life themes:
 
-        console.log('Entries text length:', entriesText.length);
+${contextText}
 
-        const prompt = `Analyze these journal entries and provide meaningful insights about patterns, emotions, growth, and recurring themes. Be specific and reference actual entries when possible:\n\n${entriesText}\n\nProvide a comprehensive analysis:`;
+Provide a comprehensive analysis covering:
 
-        console.log('Sending request to Gemini API...');
-        const result = await model.generateContent(prompt);
+1. Emotional Patterns: What emotions appear most frequently? Are there triggers or cycles?
+
+2. Personal Growth: What progress or positive changes can you identify? What challenges are they working through?
+
+3. Relationships: How do their social connections influence their wellbeing? Who are the key people?
+
+4. Recurring Themes: What topics, concerns, or interests appear repeatedly?
+
+5. Strengths & Opportunities: What are their strengths? What areas could use more attention?
+
+6. Overall Insight: Provide 2-3 key takeaways or reflections that would be most valuable for them to know.
+
+IMPORTANT FORMATTING RULES:
+- Use numbered sections (1., 2., 3., etc.) for main sections
+- Use simple bullet points with "-" for lists
+- Do NOT use markdown symbols like **, __, ###, or ***
+- Keep paragraphs concise and easy to read
+- Be specific, empathetic, and reference actual entries when relevant`;
+            
+        } else {
+            console.log('📝 Using standard analysis (not enough embeddings for RAG)');
+            
+            // Fallback: Use most recent entries for analysis
+            const recentEntries = entries.slice(-30); // Last 30 entries
+            
+            const entriesText = recentEntries
+                .map(e => {
+                    const date = e.createdAt?.toDate ? e.createdAt.toDate().toLocaleDateString() : 'Recent';
+                    return `[${date}] ${e.text}`;
+                })
+                .join('\n\n');
+
+            analysisPrompt = `Analyze these journal entries and provide meaningful insights about patterns, emotions, growth, and recurring themes. Be specific and reference actual entries when possible:
+
+${entriesText}
+
+Provide a comprehensive analysis covering emotional patterns, personal growth, relationships, recurring themes, and key insights.
+
+IMPORTANT FORMATTING RULES:
+- Use numbered sections (1., 2., 3., etc.) for main sections
+- Use simple bullet points with "-" for lists
+- Do NOT use markdown symbols like **, __, ###, or ***
+- Keep paragraphs concise and easy to read`;
+        }
+
+        console.log('🚀 Sending analysis request to Gemini API...');
+        const result = await model.generateContent(analysisPrompt);
         const response = await result.response;
         const text = response.text();
-        console.log('Received response:', text.substring(0, 100) + '...');
+        console.log('✅ Received analysis:', text.substring(0, 100) + '...');
         return text;
     } catch (error) {
-        console.error('Error analyzing journal entries:', error);
+        console.error('❌ Error analyzing journal entries:', error);
         console.error('Error details:', {
             message: error.message,
             status: error.status,
@@ -1058,27 +1141,107 @@ function JournalScreen({ userId, darkMode }) {
 }function InsightsScreen({ userId, darkMode }) {
     const [insights, setInsights] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isBackfilling, setIsBackfilling] = useState(false);
+    const [backfillProgress, setBackfillProgress] = useState({ current: 0, total: 0 });
     const [error, setError] = useState('');
+    const [entriesCount, setEntriesCount] = useState({ total: 0, withEmbeddings: 0 });
+
+    // Check embedding status on mount
+    useEffect(() => {
+        const checkEmbeddings = async () => {
+            try {
+                const collectionPath = `users/${userId}/journalEntries`;
+                const q = query(collection(db, collectionPath));
+                const snapshot = await getDocs(q);
+                const entries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const withEmbeddings = entries.filter(e => e.embedding && e.embedding.length > 0);
+                setEntriesCount({ total: entries.length, withEmbeddings: withEmbeddings.length });
+            } catch (err) {
+                console.error('Error checking embeddings:', err);
+            }
+        };
+        checkEmbeddings();
+    }, [userId]);
+
+    const handleBackfillEmbeddings = async () => {
+        setIsBackfilling(true);
+        const loadingToast = toast.loading('Generating embeddings for RAG...', {
+            position: 'bottom-right',
+        });
+        
+        try {
+            const result = await backfillEmbeddings(userId, (current, total) => {
+                setBackfillProgress({ current, total });
+            });
+            
+            toast.dismiss(loadingToast);
+            toast.success(`✅ Generated embeddings for ${result.processed} entries!`, {
+                duration: 4000,
+                position: 'bottom-right',
+            });
+            
+            // Refresh count
+            const collectionPath = `users/${userId}/journalEntries`;
+            const q = query(collection(db, collectionPath));
+            const snapshot = await getDocs(q);
+            const entries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const withEmbeddings = entries.filter(e => e.embedding && e.embedding.length > 0);
+            setEntriesCount({ total: entries.length, withEmbeddings: withEmbeddings.length });
+            
+        } catch (err) {
+            console.error('Backfill error:', err);
+            toast.dismiss(loadingToast);
+            toast.error('Failed to generate embeddings', {
+                duration: 4000,
+                position: 'bottom-right',
+            });
+        } finally {
+            setIsBackfilling(false);
+            setBackfillProgress({ current: 0, total: 0 });
+        }
+    };
 
     // Function to format AI response - remove markdown symbols
     const formatAIResponse = (text) => {
         if (!text) return '';
         
         return text
-            // Remove all heading markers (##, ###, ####)
-            .replace(/#{1,6}\s+/g, '')
+            // Remove all heading markers (###, ##, #, etc.)
+            .replace(/^#{1,6}\s+/gm, '')
+            
             // Remove ** bold markers
             .replace(/\*\*/g, '')
-            // Remove __ bold markers
+            
+            // Remove __ bold markers  
             .replace(/__/g, '')
-            // Remove single * (but preserve bullets at start of line)
-            .replace(/(?<!^|\n)\*(?!\*)/g, '')
-            // Convert markdown bullets to proper bullets
+            
+            // Remove markdown italic markers (* and _)
+            .replace(/([^*])\*([^*\s])/g, '$1$2') // *text* -> text
+            .replace(/([^_])_([^_\s])/g, '$1$2')  // _text_ -> text
+            
+            // Convert markdown bullets to proper bullets (handle nested bullets)
             .replace(/^\s*[-*+]\s+/gm, '• ')
-            // Remove any remaining asterisks that aren't bullets
+            
+            // Remove numbered list numbers but keep the content
+            .replace(/^\s*\d+\.\s+/gm, '')
+            
+            // Remove code block markers (```)
+            .replace(/```[\s\S]*?```/g, '')
+            .replace(/`([^`]+)`/g, '$1')
+            
+            // Remove blockquote markers (>)
+            .replace(/^>\s+/gm, '')
+            
+            // Remove horizontal rules (---, ***, ___)
+            .replace(/^[\-*_]{3,}$/gm, '')
+            
+            // Clean up any remaining asterisks that aren't part of content
             .replace(/\*/g, '')
-            // Clean up extra whitespace
+            
+            // Clean up extra whitespace (3+ newlines -> 2)
             .replace(/\n{3,}/g, '\n\n')
+            
+            // Trim whitespace from start and end
             .trim();
     };
 
@@ -1137,23 +1300,90 @@ function JournalScreen({ userId, darkMode }) {
                 <div className="text-center mb-6">
                     <BotIcon />
                     <h2 className={`text-2xl sm:text-3xl font-bold mt-4 mb-2 ${darkMode ? 'text-white' : 'text-slate-800'}`}>Your Personal Insights</h2>
-                    {!insights && !isLoading && <p className={`text-sm sm:text-base max-w-md mx-auto ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Click the button below to have your AI partner analyze your journal and reveal hidden patterns.</p>}
+                    {!insights && !isLoading && <p className={`text-sm sm:text-base max-w-md mx-auto ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Click the button below to have your AI partner analyze your journal using advanced RAG technology.</p>}
+                    
+                    {/* RAG Status Badge */}
+                    {entriesCount.total > 0 && (
+                        <div className="mt-4 inline-flex items-center gap-2">
+                            <div className={`px-3 py-1.5 rounded-full text-xs font-medium ${
+                                entriesCount.withEmbeddings >= entriesCount.total * 0.8 
+                                    ? darkMode ? 'bg-green-900/30 text-green-400 border border-green-800' : 'bg-green-100 text-green-700'
+                                    : darkMode ? 'bg-yellow-900/30 text-yellow-400 border border-yellow-800' : 'bg-yellow-100 text-yellow-700'
+                            }`}>
+                                ✨ RAG: {entriesCount.withEmbeddings}/{entriesCount.total} entries indexed
+                            </div>
+                        </div>
+                    )}
                 </div>
-                <div className="text-center">
-                    <button onClick={handleAnalysis} disabled={isLoading} className="mt-4 sm:mt-8 px-6 sm:px-8 py-2.5 sm:py-3 bg-purple-600 text-white hover:bg-purple-700 font-bold rounded-lg shadow-lg transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center text-sm sm:text-base">
-                        {isLoading ? <><Spinner /> <span className="ml-3">Analyzing...</span></> : 'Analyze My Journal'}
+                
+                <div className="text-center space-y-3">
+                    <button 
+                        onClick={handleAnalysis} 
+                        disabled={isLoading} 
+                        className="mt-4 sm:mt-8 px-6 sm:px-8 py-2.5 sm:py-3 bg-purple-600 text-white hover:bg-purple-700 font-bold rounded-lg shadow-lg transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center text-sm sm:text-base"
+                    >
+                        {isLoading ? <><Spinner /> <span className="ml-3">Analyzing with RAG...</span></> : '🔮 Analyze My Journal'}
                     </button>
+                    
+                    {/* Backfill Embeddings Button - only show if missing embeddings */}
+                    {entriesCount.total > 0 && entriesCount.withEmbeddings < entriesCount.total && (
+                        <div className="mt-3">
+                            <button 
+                                onClick={handleBackfillEmbeddings}
+                                disabled={isBackfilling}
+                                className={`px-4 py-2 text-xs sm:text-sm rounded-lg transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center gap-2 ${
+                                    darkMode 
+                                        ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700' 
+                                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300'
+                                }`}
+                            >
+                                {isBackfilling ? (
+                                    <>
+                                        <Spinner /> 
+                                        <span>Generating embeddings... {backfillProgress.current}/{backfillProgress.total}</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <SparklesIcon className="h-4 w-4" />
+                                        <span>Enable RAG for {entriesCount.total - entriesCount.withEmbeddings} older entries</span>
+                                    </>
+                                )}
+                            </button>
+                            <p className={`text-xs mt-2 ${darkMode ? 'text-zinc-500' : 'text-gray-500'}`}>
+                                💡 This will enable semantic search for better insights
+                            </p>
+                        </div>
+                    )}
                 </div>
+                
                 <div className="mt-6 sm:mt-8">
                     {error && <p className={`p-4 rounded-lg text-sm sm:text-base ${darkMode ? 'text-red-400 bg-red-900/30 border border-red-800' : 'text-red-500 bg-red-100'}`}>{error}</p>}
                     {insights && (
                         <div className={`p-4 sm:p-6 rounded-lg shadow-sm animate-fade-in max-w-full overflow-hidden ${darkMode ? 'bg-zinc-900 border border-zinc-800 text-zinc-200' : 'bg-white text-slate-700'}`}>
-                            <div className="max-w-none">
-                                {insights.split('\n\n').map((paragraph, idx) => (
-                                    <p key={idx} className="mb-4 text-sm sm:text-base leading-relaxed break-words whitespace-pre-wrap">
-                                        {paragraph}
-                                    </p>
-                                ))}
+                            <div className="max-w-none space-y-4">
+                                {insights.split('\n\n').map((paragraph, idx) => {
+                                    // Check if this is a section header (starts with a number like "1." or contains "###")
+                                    const isMainSection = /^\d+\.\s+[A-Z]/.test(paragraph);
+                                    const isSubSection = paragraph.startsWith('Goal:') || paragraph.startsWith('Habit:') || /^\*\*[A-Za-z]/.test(paragraph);
+                                    
+                                    return (
+                                        <div key={idx}>
+                                            {isMainSection ? (
+                                                <h3 className={`text-lg sm:text-xl font-bold mb-3 mt-6 pb-2 border-b ${darkMode ? 'text-purple-400 border-zinc-700' : 'text-purple-600 border-gray-200'}`}>
+                                                    {paragraph}
+                                                </h3>
+                                            ) : isSubSection ? (
+                                                <h4 className={`text-base sm:text-lg font-semibold mb-2 mt-4 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                                                    {paragraph}
+                                                </h4>
+                                            ) : (
+                                                <p className="mb-3 text-sm sm:text-base leading-relaxed break-words whitespace-pre-wrap">
+                                                    {paragraph}
+                                                </p>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
@@ -2087,6 +2317,49 @@ function GoalsScreen({ userId, darkMode }) {
     const [editingGoal, setEditingGoal] = useState(null);
     const [editingHabit, setEditingHabit] = useState(null);
 
+    // Format AI response - remove markdown symbols
+    const formatAIResponse = (text) => {
+        if (!text) return '';
+        
+        return text
+            // Remove all heading markers (###, ##, #, etc.)
+            .replace(/^#{1,6}\s+/gm, '')
+            
+            // Remove ** bold markers
+            .replace(/\*\*/g, '')
+            
+            // Remove __ bold markers  
+            .replace(/__/g, '')
+            
+            // Remove markdown italic markers (* and _)
+            .replace(/([^*])\*([^*\s])/g, '$1$2')
+            .replace(/([^_])_([^_\s])/g, '$1$2')
+            
+            // Convert markdown bullets to proper bullets
+            .replace(/^\s*[-*+]\s+/gm, '• ')
+            
+            // Remove numbered list numbers but keep content
+            .replace(/^\s*\d+\.\s+/gm, '')
+            
+            // Remove code blocks
+            .replace(/```[\s\S]*?```/g, '')
+            .replace(/`([^`]+)`/g, '$1')
+            
+            // Remove blockquotes
+            .replace(/^>\s+/gm, '')
+            
+            // Remove horizontal rules
+            .replace(/^[\-*_]{3,}$/gm, '')
+            
+            // Clean up remaining asterisks
+            .replace(/\*/g, '')
+            
+            // Clean up extra whitespace
+            .replace(/\n{3,}/g, '\n\n')
+            
+            .trim();
+    };
+
     useEffect(() => {
         setIsLoading(true);
 
@@ -2259,7 +2532,7 @@ function GoalsScreen({ userId, darkMode }) {
 
             const entriesText = lastWeekEntries.map(e => e.text).join('\n\n');
             
-            const prompt = `You are analyzing a user's progress for the past week. Provide a focused analysis on their goals and habits.
+            const prompt = `You are analyzing a user's weekly progress. Provide a CONCISE, focused analysis on their goals and habits.
 
 GOALS:
 ${goals.map(g => `- ${g.title} (${g.frequency || 'one-time'} goal, category: ${g.category})`).join('\n')}
@@ -2270,20 +2543,33 @@ ${habitStats.map(h => `- ${h.title}: ${h.completions}/7 days (${h.completionRate
 JOURNAL ENTRIES FROM THIS WEEK:
 ${entriesText || 'No journal entries this week.'}
 
-Please provide:
-1. **Goal Progress Summary**: For each goal, analyze if there's evidence of progress in the journal entries. Look for mentions, related activities, or mindset shifts.
+Please provide a BRIEF analysis with these sections:
 
-2. **Habit Analysis**: 
-   - Which habits are going well (>70% completion)?
-   - Which habits need attention (<50% completion)?
-   - Identify patterns - which days are hardest?
-   - Suggest specific changes to improve consistency
+1. Goal Progress Summary
+For each goal, briefly note if there's evidence of progress in the journal. Keep it to 2-3 sentences per goal.
 
-3. **Behavioral Patterns**: What patterns do you notice in their writing that relate to their goals and habits?
+2. Habit Analysis
+- Habits going well (>70% completion): List with 1 sentence each
+- Habits needing attention (<50% completion): List with 1 sentence each  
+- Pattern insight: 1-2 sentences about which days are hardest
+- Top suggestion for consistency: 1 specific, actionable tip
 
-4. **Actionable Recommendations**: Give 3-5 specific, practical suggestions for the coming week to improve goal achievement and habit consistency.
+3. Behavioral Patterns
+Identify 2-3 key patterns you notice that relate to their goals and habits. Keep each pattern to 1-2 sentences.
 
-5. **Encouragement**: Acknowledge their wins and motivate them for next week.
+4. Top 3 Recommendations
+Give exactly 3 specific, practical suggestions for next week. One sentence each.
+
+5. Quick Encouragement
+2-3 sentences acknowledging wins and motivating them.
+
+CRITICAL FORMATTING RULES:
+- Use numbered sections (1., 2., 3., etc.) ONLY for main sections
+- Use simple dashes "-" for any lists, NOT asterisks or bullets
+- Do NOT use ANY markdown symbols: no **, __, ###, ***, or ***  
+- Keep EVERY section brief - aim for 50% less text than you'd normally write
+- Maximum 400 words total
+- Be direct and actionable, not verbose
 
 Keep it focused on goals and habits - this is NOT a general journal analysis.`;
 
@@ -2680,8 +2966,25 @@ Keep it focused on goals and habits - this is NOT a general journal analysis.`;
                             <XCircleIcon className="h-6 w-6" />
                         </button>
                     </h2>
-                    <div className={`prose max-w-none whitespace-pre-wrap ${darkMode ? 'prose-invert text-zinc-200' : 'prose-slate text-slate-700'}`}>
-                        {weeklyReport}
+                    <div className={`max-w-none space-y-3 ${darkMode ? 'text-zinc-200' : 'text-slate-700'}`}>
+                        {formatAIResponse(weeklyReport).split('\n\n').map((paragraph, idx) => {
+                            // Detect section headers (starts with number like "1.")
+                            const isMainSection = /^\d+\.\s+[A-Z]/.test(paragraph);
+                            
+                            return (
+                                <div key={idx}>
+                                    {isMainSection ? (
+                                        <h3 className={`text-lg font-bold mb-2 mt-4 pb-1 border-b ${darkMode ? 'text-purple-400 border-zinc-700' : 'text-purple-600 border-gray-200'}`}>
+                                            {paragraph}
+                                        </h3>
+                                    ) : (
+                                        <p className="mb-2 text-sm leading-relaxed whitespace-pre-wrap">
+                                            {paragraph}
+                                        </p>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             )}

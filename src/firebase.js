@@ -5,14 +5,14 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // --- Configuration ---
 const firebaseConfig = {
-  apiKey: "AIzaSyCKwqKClC158emMaxbXno63vQesYiKQbds",
-  authDomain: "ai-life-partner-project.firebaseapp.com",
-  projectId: "ai-life-partner-project",
-  storageBucket: "ai-life-partner-project.appspot.com",
-  messagingSenderId: "710280368627",
-  appId: "1:710280368627:web:757d73557a72c758ab8286"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
-const GEMINI_API_KEY = "AIzaSyB2HcRUoyNUuAuwcKuXRm79zPEX8n52mm4";
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 // --- Initialize and Export Services ---
 const app = initializeApp(firebaseConfig);
