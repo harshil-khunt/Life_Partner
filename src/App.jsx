@@ -24,7 +24,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-3-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 const embeddingModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
 
 
