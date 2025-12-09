@@ -24,7 +24,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-3-pro" });
 const embeddingModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
 
 
@@ -159,7 +159,19 @@ IMPORTANT FORMATTING RULES:
         console.log('🚀 Sending analysis request to Gemini API...');
         const result = await model.generateContent(analysisPrompt);
         const response = await result.response;
-        const text = response.text();
+        
+        // Check if response was blocked by safety filters
+        if (!response || !response.text) {
+            throw new Error('Response was blocked or empty. Please try again.');
+        }
+        
+        const text = await response.text();
+        
+        // Validate response is not empty
+        if (!text || text.trim().length === 0) {
+            throw new Error('Received empty response from AI.');
+        }
+        
         console.log('✅ Received analysis:', text.substring(0, 100) + '...');
         return text;
     } catch (error) {
@@ -204,7 +216,14 @@ Emotions:`;
         
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const emotionsText = response.text().trim().toLowerCase();
+        
+        if (!response || !response.text) {
+            console.warn('Emotion analysis response was blocked');
+            return { primary: 'neutral', secondary: 'calm', description: 'Unable to analyze emotions' };
+        }
+        
+        const emotionsText = await response.text();
+        const trimmedText = emotionsText.trim().toLowerCase();
         
         // Parse multiple emotions
         const detectedEmotions = emotionsText.split(',').map(e => e.trim()).filter(e => e);
@@ -429,7 +448,19 @@ async function askPastSelf(question, entries) {
             try {
                 const result = await model.generateContent(prompt);
                 const response = await result.response;
-                const text = response.text();
+                
+                // Check if response was blocked by safety filters
+                if (!response || !response.text) {
+                    throw new Error('Response was blocked or empty. Please rephrase your question.');
+                }
+                
+                const text = await response.text();
+                
+                // Validate response is not empty
+                if (!text || text.trim().length === 0) {
+                    throw new Error('Received empty response from AI.');
+                }
+                
                 console.log('✅ Received response:', text.substring(0, 100) + '...');
                 return text;
             } catch (apiError) {
@@ -505,7 +536,15 @@ Rules:
         console.log('Sending people analysis request to Gemini API...');
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        let text = response.text().trim();
+        
+        // Check for blocked or empty responses
+        if (!response || !response.text) {
+            console.warn('People analysis response was blocked');
+            return [];
+        }
+        
+        let text = await response.text();
+        text = text.trim();
         
         // Remove markdown code blocks if present
         text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -2621,7 +2660,18 @@ Keep it focused on goals and habits - this is NOT a general journal analysis.`;
 
             const result = await model.generateContent(prompt);
             const response = await result.response;
-            const report = response.text();
+            
+            // Check if response was blocked by safety filters
+            if (!response || !response.text) {
+                throw new Error('Response was blocked or empty. Please try again.');
+            }
+            
+            const report = await response.text();
+            
+            // Validate response is not empty
+            if (!report || report.trim().length === 0) {
+                throw new Error('Received empty report from AI.');
+            }
             
             setWeeklyReport(report);
             toast.success('Weekly report generated! 📊', { id: 'weekly-report' });
