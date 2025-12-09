@@ -189,18 +189,25 @@ async function generateEmbedding(text) {
 
 // --- Vocal Tone Analysis (Free) ---
 
-// Analyze text sentiment to determine emotional tone
+// Analyze text sentiment to determine emotional tone - supports MULTIPLE emotions
 async function analyzeTextSentiment(text) {
     try {
-        const prompt = `Analyze the emotional tone of this text. Respond with ONLY ONE of these emotions: happy, sad, stressed, calm, excited, angry, anxious, content, frustrated, hopeful.
+        const prompt = `Analyze the emotional tone of this text. Identify the 1-3 most prominent emotions present.
+
+Available emotions: happy, sad, stressed, calm, excited, angry, anxious, content, frustrated, hopeful, grateful, lonely, proud, overwhelmed, peaceful
 
 Text: "${text}"
 
-Emotion:`;
+Respond with ONLY the emotion words separated by commas (e.g., "happy, anxious" or "stressed, hopeful, calm"). Maximum 3 emotions.
+
+Emotions:`;
         
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const emotion = response.text().trim().toLowerCase();
+        const emotionsText = response.text().trim().toLowerCase();
+        
+        // Parse multiple emotions
+        const detectedEmotions = emotionsText.split(',').map(e => e.trim()).filter(e => e);
         
         // Map emotion to emoji and color
         const emotionMap = {
@@ -213,15 +220,32 @@ Emotion:`;
             'anxious': { emoji: '😟', color: '#f97316', label: 'Anxious' },
             'content': { emoji: '😊', color: '#14b8a6', label: 'Content' },
             'frustrated': { emoji: '😤', color: '#ef4444', label: 'Frustrated' },
-            'hopeful': { emoji: '🌟', color: '#8b5cf6', label: 'Hopeful' }
+            'hopeful': { emoji: '🌟', color: '#8b5cf6', label: 'Hopeful' },
+            'grateful': { emoji: '🙏', color: '#ec4899', label: 'Grateful' },
+            'lonely': { emoji: '😔', color: '#64748b', label: 'Lonely' },
+            'proud': { emoji: '💪', color: '#3b82f6', label: 'Proud' },
+            'overwhelmed': { emoji: '😵', color: '#f97316', label: 'Overwhelmed' },
+            'peaceful': { emoji: '🕊️', color: '#10b981', label: 'Peaceful' }
         };
         
-        return emotionMap[emotion] || emotionMap['calm'];
+        // Map detected emotions to their data, limit to 3
+        const emotions = detectedEmotions
+            .map(emotion => emotionMap[emotion])
+            .filter(e => e)
+            .slice(0, 3);
+        
+        // If no valid emotions detected, return default
+        if (emotions.length === 0) {
+            return [emotionMap['calm']];
+        }
+        
+        return emotions;
     } catch (error) {
         console.error('Error analyzing sentiment:', error);
-        return { emoji: '😊', color: '#10b981', label: 'Positive' };
+        return [{ emoji: '😊', color: '#10b981', label: 'Positive' }];
     }
 }
+
 
 // Analyze audio characteristics (pitch, energy) using Web Audio API
 function analyzeAudioTone(audioData) {
@@ -748,18 +772,35 @@ const JournalEntry = ({ entry, searchQuery, darkMode }) => {
             <div className="flex items-center justify-between mb-1 sm:mb-1.5 md:mb-2.5">
                 <p className={`text-[10px] sm:text-xs md:text-sm font-medium ${darkMode ? 'text-zinc-400' : 'text-stone-500'}`}>{time || 'Just now'}</p>
                 
-                {/* Emotion Indicator */}
-                {entry.emotion && (
-                    <div 
-                        className={`flex items-center gap-1 sm:gap-1.5 md:gap-2 px-1 sm:px-2 md:px-3 py-0.5 sm:py-0.5 md:py-1 rounded-full text-[10px] sm:text-xs md:text-sm font-semibold backdrop-blur-sm transition-all duration-300 hover:scale-105 ${
-                            darkMode ? 'bg-zinc-800 border border-zinc-700' : 'bg-white/80 border border-stone-200'
-                        }`}
-                        style={{ borderColor: entry.emotion.color + '40' }}
-                    >
-                        <span className="text-xs sm:text-sm md:text-base">{entry.emotion.emoji}</span>
-                        <span className="text-[10px] sm:text-xs md:text-sm" style={{ color: entry.emotion.color }}>{entry.emotion.label}</span>
-                    </div>
-                )}
+                {/* Multiple Emotion Indicators */}
+                <div className="flex items-center gap-1 sm:gap-1.5">
+                    {/* Handle new format (emotions array) */}
+                    {entry.emotions && entry.emotions.length > 0 && entry.emotions.map((emotion, idx) => (
+                        <div 
+                            key={idx}
+                            className={`flex items-center gap-1 px-1 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold backdrop-blur-sm transition-all duration-300 hover:scale-105 ${
+                                darkMode ? 'bg-zinc-800 border border-zinc-700' : 'bg-white/80 border border-stone-200'
+                            }`}
+                            style={{ borderColor: emotion.color + '40' }}
+                        >
+                            <span className="text-xs sm:text-sm">{emotion.emoji}</span>
+                            <span className="text-[10px] sm:text-xs hidden sm:inline" style={{ color: emotion.color }}>{emotion.label}</span>
+                        </div>
+                    ))}
+                    
+                    {/* Handle old format (single emotion) for backward compatibility */}
+                    {entry.emotion && !entry.emotions && (
+                        <div 
+                            className={`flex items-center gap-1 sm:gap-1.5 md:gap-2 px-1 sm:px-2 md:px-3 py-0.5 sm:py-0.5 md:py-1 rounded-full text-[10px] sm:text-xs md:text-sm font-semibold backdrop-blur-sm transition-all duration-300 hover:scale-105 ${
+                                darkMode ? 'bg-zinc-800 border border-zinc-700' : 'bg-white/80 border border-stone-200'
+                            }`}
+                            style={{ borderColor: entry.emotion.color + '40' }}
+                        >
+                            <span className="text-xs sm:text-sm md:text-base">{entry.emotion.emoji}</span>
+                            <span className="text-[10px] sm:text-xs md:text-sm" style={{ color: entry.emotion.color }}>{entry.emotion.label}</span>
+                        </div>
+                    )}
+                </div>
             </div>
             <p className={`text-[10px] sm:text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words ${darkMode ? 'text-zinc-200' : 'text-stone-700'}`}>
                 {highlightText(entry.text, searchQuery)}
@@ -898,15 +939,15 @@ function JournalScreen({ userId, darkMode }) {
             
             // Analyze emotional tone (FREE - uses text sentiment)
             console.log('🎭 Analyzing emotional tone...');
-            const emotion = await analyzeTextSentiment(newEntry);
-            console.log('✨ Detected emotion:', emotion.label);
+            const emotions = await analyzeTextSentiment(newEntry);
+            console.log('✨ Detected emotions:', emotions.map(e => e.label).join(', '));
             
-            // Save entry with embedding and emotion
+            // Save entry with embedding and emotions (array)
             const entryData = { 
                 text: newEntry, 
                 createdAt: serverTimestamp(),
                 embedding: embedding || [], // Store embedding or empty array if failed
-                emotion: emotion // Store emotion analysis
+                emotions: emotions // Store array of emotions
             };
             
             const entryRef = await addDoc(collection(db, collectionPath), entryData);
@@ -921,7 +962,12 @@ function JournalScreen({ userId, darkMode }) {
             await scanForGoalMentions(userId, newEntry, entryRef.id);
             
             setNewEntry('');
-            toast.success(`Entry saved! ${emotion.emoji} Feeling ${emotion.label.toLowerCase()}`, {
+            
+            // Create emotion message for toast
+            const emotionMessage = emotions.map(e => e.emoji).join(' ');
+            const emotionLabels = emotions.map(e => e.label.toLowerCase()).join(', ');
+            
+            toast.success(`Entry saved! ${emotionMessage} Feeling ${emotionLabels}`, {
                 duration: 3000,
                 position: 'bottom-right',
             });
